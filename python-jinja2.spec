@@ -2,7 +2,7 @@
 
 Name:		python-jinja2
 Version:	2.2.1
-Release:	2%{?dist}
+Release:	3%{?dist}
 Summary:	General purpose template engine
 Group:		Development/Languages
 License:	BSD
@@ -17,6 +17,7 @@ BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:	python-devel
 BuildRequires:	python-setuptools-devel
 Requires:	python-babel >= 0.8
+Requires:	python-setuptools
 
 %description
 Jinja2 is a template engine written in pure Python.  It provides a
@@ -66,9 +67,13 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Thu Sep 29 2016 Miro Hrončok <mhroncok@redhat.com> - 2.2.1-3
+- Require python-setuptools, otherwise jinja2.__version__ evaluates to "unknown"
+Resolves: rhbz#1121241
+
 * Fri May 30 2014 Bohuslav Kabrda <bkabrda@redhat.com> - 2.2.1-2
 - Fix CVE-2014-1402
-Resolves: rhbz#1102889
+Resolves: rhbz#1102890
 
 * Sat Sep 19 2009 Thomas Moschny <thomas.moschny@gmx.de> - 2.2.1-1
 - Update to 2.2.1, mainly a bugfix release.
