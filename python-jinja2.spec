@@ -2,12 +2,17 @@
 
 Name:		python-jinja2
 Version:	2.2.1
-Release:	1%{?dist}
+Release:	2%{?dist}
 Summary:	General purpose template engine
 Group:		Development/Languages
 License:	BSD
 URL:		http://jinja.pocoo.org/
 Source0:	http://pypi.python.org/packages/source/J/Jinja2/Jinja2-%{version}.tar.gz
+# This patch consists of two upstream patches merged and rebased for 2.2.1
+#  (the first upstream patch introduced CVE-2014-0012 and the second fixed it)
+#  https://github.com/mitsuhiko/jinja2/commit/acb672b6a179567632e032f547582f30fa2f4aa7
+#  https://github.com/mitsuhiko/jinja2/pull/296/files
+Patch0:         %{name}-fix-CVE-2014-1402.patch
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:	python-devel
 BuildRequires:	python-setuptools-devel
@@ -28,6 +33,7 @@ environments.
 %prep
 %setup -q -n Jinja2-%{version}
 
+%patch0 -p0
 
 %build
 CFLAGS="$RPM_OPT_FLAGS" %{__python} setup.py --with-speedups build
@@ -60,6 +66,10 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Fri May 30 2014 Bohuslav Kabrda <bkabrda@redhat.com> - 2.2.1-2
+- Fix CVE-2014-1402
+Resolves: rhbz#1102889
+
 * Sat Sep 19 2009 Thomas Moschny <thomas.moschny@gmx.de> - 2.2.1-1
 - Update to 2.2.1, mainly a bugfix release.
 - Remove patch no longer needed.
