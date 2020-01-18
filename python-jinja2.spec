@@ -10,19 +10,29 @@
 
 Name:           python-jinja2
 Version:        2.7.2
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        General purpose template engine
 Group:          Development/Languages
 License:        BSD
 URL:            http://jinja.pocoo.org/
 Source0:        http://pypi.python.org/packages/source/J/Jinja2/Jinja2-%{version}.tar.gz
+
 Patch1:         %{name}-align-jinjaext-with-compatibility-cleanups.patch
+
 # Patch for CVE-2014-0012, see https://bugzilla.redhat.com/show_bug.cgi?id=1051421
 # for discussion (not yet sent upstream)
 Patch2:         python-jinja2-fix-CVE-2014-0012.patch
+
+# Fix CVE-2016-10745
+# Also bundling the EscapeFormatter class from markupsafe >= 0.21, as we don't ship
+# that version in RHEL7 and it's required for the CVE fix
+# https://github.com/pallets/jinja/commit/9b53045c34e61013dc8f09b7e52a555fa16bed16
+# https://bugzilla.redhat.com/show_bug.cgi?id=1701309
+Patch4: python-jinja2-fix-CVE-2016-10745.patch
+
 BuildArch:      noarch
-BuildRequires:  python-devel
-BuildRequires:  python-setuptools
+BuildRequires:  python2-devel
+BuildRequires:  python2-setuptools
 BuildRequires:  python-markupsafe
 %if 0%{?with_docs}
 BuildRequires:  python-sphinx
@@ -35,6 +45,7 @@ BuildRequires:  python3-setuptools
 BuildRequires:  python3-markupsafe
 %endif # with_python3
 
+Provides: python2-jinja2 = %{version}-%{release}
 
 %description
 Jinja2 is a template engine written in pure Python.  It provides a
@@ -74,6 +85,7 @@ environments.
 %setup -q -n Jinja2-%{version}
 %patch1 -p1
 %patch2 -p1
+%patch4 -p1
 
 # cleanup
 find . -name '*.pyo' -o -name '*.pyc' -delete
@@ -87,7 +99,7 @@ cp -a . %{py3dir}
 
 
 %build
-%{__python} setup.py build
+%py2_build
 
 # for now, we build docs using Python 2.x and use that for both
 # packages.
@@ -103,8 +115,7 @@ popd
 
 
 %install
-%{__python} setup.py install -O1 --skip-build \
-        --root %{buildroot}
+%py2_install
 
 # remove hidden file
 rm -rf docs/_build/html/.buildinfo
@@ -129,14 +140,15 @@ popd
 
 
 %files
-%doc AUTHORS CHANGES LICENSE
+%doc AUTHORS CHANGES
+%license LICENSE
 %if 0%{?with_docs}
 %doc docs/_build/html
 %endif # with_docs
 %doc ext
 %doc examples
-%{python_sitelib}/*
-%exclude %{python_sitelib}/jinja2/_debugsupport.c
+%{python2_sitelib}/*
+%exclude %{python2_sitelib}/jinja2/_debugsupport.c
 
 
 %if 0%{?with_python3}
@@ -153,6 +165,10 @@ popd
 
 
 %changelog
+* Thu May 02 2019 Charalampos Stratakis <cstratak@redhat.com> - 2.7.2-3
+- Fix for CVE-2016-10745
+Resolves: rhbz#1701308
+
 * Tue Jan 28 2014 Bohuslav Kabrda <bkabrda@redhat.com> - 2.7.2-2
 - Fix CVE-2014-0012.
 Resolves: rhbz#1051427
