@@ -42,7 +42,7 @@ API
     are running multiple users on the same server) they can't harm each other
     via JavaScript insertions and much more.
 
-    Also the sandbox is only as good as the configuration.  We strongly
+    Also the sandbox is only as good as the configuration.  We stronly
     recommend only passing non-shared resources to the template and use
     some sort of whitelisting for attributes.
 

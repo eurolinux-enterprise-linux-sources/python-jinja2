@@ -8,50 +8,30 @@
 # and python-sphinx:
 %global with_docs 1
 
-Name:           python-jinja2
-Version:        2.7.2
-Release:        4%{?dist}
-Summary:        General purpose template engine
-Group:          Development/Languages
-License:        BSD
-URL:            http://jinja.pocoo.org/
-Source0:        http://pypi.python.org/packages/source/J/Jinja2/Jinja2-%{version}.tar.gz
-
-Patch1:         %{name}-align-jinjaext-with-compatibility-cleanups.patch
-
-# Patch for CVE-2014-0012, see https://bugzilla.redhat.com/show_bug.cgi?id=1051421
-# for discussion (not yet sent upstream)
-Patch2:         python-jinja2-fix-CVE-2014-0012.patch
-
-# Replace lambda for 'dict' with dict itself to support all dict constructors
-# Backported from Jinja2 2.8
-# https://github.com/pallets/jinja/commit/6179c02c91800d220de03006117afa5e6d60f0f6
-# https://bugzilla.redhat.com/show_bug.cgi?id=1697237
-Patch3:         python-jinja2-lambda-to-dict.patch
-
-# Fix CVE-2016-10745
-# Also bundling the EscapeFormatter class from markupsafe >= 0.21, as we don't ship
-# that version in RHEL7 and it's required for the CVE fix
-# https://github.com/pallets/jinja/commit/9b53045c34e61013dc8f09b7e52a555fa16bed16
-# https://bugzilla.redhat.com/show_bug.cgi?id=1701309
-Patch4: python-jinja2-fix-CVE-2016-10745.patch
-
-BuildArch:      noarch
-BuildRequires:  python2-devel
-BuildRequires:  python2-setuptools
-BuildRequires:  python-markupsafe
+Name:		python-jinja2
+Version:	2.6
+Release:	6%{?dist}
+Summary:	General purpose template engine
+Group:		Development/Languages
+License:	BSD
+URL:		http://jinja.pocoo.org/
+Source0:	http://pypi.python.org/packages/source/J/Jinja2/Jinja2-%{version}.tar.gz
+BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildArch:	noarch
+BuildRequires:	python-devel
+BuildRequires:	python-setuptools
+BuildRequires:	python-markupsafe
 %if 0%{?with_docs}
-BuildRequires:  python-sphinx
+BuildRequires:	python-sphinx
 %endif # with_docs
-Requires:       python-babel >= 0.8
-Requires:       python-markupsafe
+Requires:	python-babel >= 0.8
+Requires:	python-markupsafe
 %if 0%{?with_python3}
-BuildRequires:  python3-devel
-BuildRequires:  python3-setuptools
-BuildRequires:  python3-markupsafe
+BuildRequires:	python3-devel
+BuildRequires:	python3-setuptools
+BuildRequires:	python3-markupsafe
 %endif # with_python3
 
-Provides: python2-jinja2 = %{version}-%{release}
 
 %description
 Jinja2 is a template engine written in pure Python.  It provides a
@@ -67,11 +47,11 @@ environments.
 
 %if 0%{?with_python3}
 %package -n python3-jinja2
-Summary:        General purpose template engine
-Group:          Development/Languages
-Requires:       python3-markupsafe
+Summary:	General purpose template engine
+Group:		Development/Languages
+Requires:	python3-markupsafe
 # babel isn't py3k ready yet, and is only a weak dependency
-#Requires:       python3-babel >= 0.8
+#Requires:	 python3-babel >= 0.8
 
 
 %description -n python3-jinja2
@@ -89,10 +69,6 @@ environments.
 
 %prep
 %setup -q -n Jinja2-%{version}
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
 
 # cleanup
 find . -name '*.pyo' -o -name '*.pyc' -delete
@@ -106,12 +82,12 @@ cp -a . %{py3dir}
 
 
 %build
-%py2_build
+%{__python} setup.py build
 
 # for now, we build docs using Python 2.x and use that for both
 # packages.
 %if 0%{?with_docs}
-make -C docs html PYTHONPATH=$(pwd)
+make -C docs html
 %endif # with_docs
 
 %if 0%{?with_python3}
@@ -122,7 +98,9 @@ popd
 
 
 %install
-%py2_install
+rm -rf %{buildroot}
+%{__python} setup.py install -O1 --skip-build \
+	    --root %{buildroot}
 
 # remove hidden file
 rm -rf docs/_build/html/.buildinfo
@@ -130,9 +108,13 @@ rm -rf docs/_build/html/.buildinfo
 %if 0%{?with_python3}
 pushd %{py3dir}
 %{__python3} setup.py install -O1 --skip-build \
-        --root %{buildroot}
+	    --root %{buildroot}
 popd
 %endif # with_python3
+
+
+%clean
+rm -rf %{buildroot}
 
 
 %check
@@ -147,19 +129,20 @@ popd
 
 
 %files
-%doc AUTHORS CHANGES
-%license LICENSE
+%defattr(-,root,root,-)
+%doc AUTHORS CHANGES LICENSE
 %if 0%{?with_docs}
 %doc docs/_build/html
 %endif # with_docs
 %doc ext
 %doc examples
-%{python2_sitelib}/*
-%exclude %{python2_sitelib}/jinja2/_debugsupport.c
+%{python_sitelib}/*
+%exclude %{python_sitelib}/jinja2/_debugsupport.c
 
 
 %if 0%{?with_python3}
 %files -n python3-jinja2
+%defattr(-,root,root,-)
 %doc AUTHORS CHANGES LICENSE
 %if 0%{?with_docs}
 %doc docs/_build/html
@@ -172,32 +155,6 @@ popd
 
 
 %changelog
-* Thu May 02 2019 Charalampos Stratakis <cstratak@redhat.com> - 2.7.2-4
-- Fix for CVE-2016-10745
-Resolves: rhbz#1701309
-
-* Wed Apr 10 2019 Miro Hrončok <mhroncok@redhat.com> - 2.7.2-3
-- Replace lambda for 'dict' with dict itself to support all dict constructors
-Resolves: rhbz#1697237
-
-* Tue Jan 28 2014 Bohuslav Kabrda <bkabrda@redhat.com> - 2.7.2-2
-- Fix CVE-2014-0012.
-Resolves: rhbz#1051427
-
-* Wed Jan 15 2014 Bohuslav Kabrda <bkabrda@redhat.com> - 2.7.2-1
-- Reverted flawed patch for #1051427 (this reintroduces #1052102).
-- Spec cleanup (removed rhel < 7 specific stuff).
-- Update to 2.7.2.
-Resolves: rhbz#1052777
-
-* Tue Jan 14 2014 Tomas Radej <tradej@redhat.com> - 2.6-8
-- Using secure tmp dir
-- Replaced tabs with spaces
-Resolves: rhbz#1051427
-
-* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 2.6-7
-- Mass rebuild 2013-12-27
-
 * Thu Feb 14 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.6-6
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
 
@@ -257,7 +214,7 @@ dependency with python-sphinx; disable docs for now
 
 * Tue Jul 13 2010 Thomas Moschny <thomas.moschny@gmx.de> - 2.5-1
 - Update to upstream version 2.5.
-- Create python3 subpackage.
+- Create python3 subpackage. 
 - Minor specfile fixes.
 - Add examples directory.
 - Thanks to Gareth Armstrong for additional hints.
